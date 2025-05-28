@@ -16,7 +16,6 @@ export default function CreateTaskPage() {
     registerWithValidation,
     registerTextareaWithValidation,
     registerSelectWithValidation,
-    register,
     watch,
     handleSubmit,
     formState: { errors },
@@ -94,6 +93,7 @@ export default function CreateTaskPage() {
                 registration={{
                   ...registerWithValidation('title'),
                   onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+                    console.log(e);
                     handleFieldBlur('title');
                   }
                 }}
@@ -114,6 +114,7 @@ export default function CreateTaskPage() {
                 registration={{
                   ...registerTextareaWithValidation('description'),
                   onBlur: (e: React.FocusEvent<HTMLTextAreaElement>) => {
+                    console.log(e);
                     handleFieldBlur('description');
                   }
                 }}

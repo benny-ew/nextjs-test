@@ -70,25 +70,27 @@ export function FormField({
         {showValidation && validIcon && (
           <div className="absolute inset-y-0 right-0 flex items-center pr-3">
             {hasError ? (
-              <AlertCircle className="h-4 w-4 text-red-500" />
+              <AlertCircle className="h-4 w-4 text-red-500" data-testid="alert-circle-icon" />
             ) : isValid ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" data-testid="check-circle-icon" />
             ) : null}
           </div>
         )}
       </div>
 
       {/* Character Count */}
-      {showCharCount && maxLength && (
+      {showCharCount && (
         <div className="flex justify-end">
           <span className={`text-xs ${
-            value.length > maxLength * 0.9 
-              ? value.length >= maxLength 
-                ? 'text-red-500' 
-                : 'text-yellow-500'
-              : 'text-gray-500'
+            maxLength ? (
+              value.length > maxLength * 0.9 
+                ? value.length >= maxLength 
+                  ? 'text-red-500' 
+                  : 'text-yellow-500'
+                : 'text-gray-500'
+            ) : 'text-gray-500'
           }`}>
-            {value.length}/{maxLength}
+            {maxLength ? `${value.length}/${maxLength}` : `${value.length} characters`}
           </span>
         </div>
       )}
@@ -171,16 +173,18 @@ export function FormTextarea({
       />
 
       {/* Character Count */}
-      {showCharCount && maxLength && (
+      {showCharCount && (
         <div className="flex justify-end">
           <span className={`text-xs ${
-            value.length > maxLength * 0.9 
-              ? value.length >= maxLength 
-                ? 'text-red-500' 
-                : 'text-yellow-500'
-              : 'text-gray-500'
+            maxLength ? (
+              value.length > maxLength * 0.9 
+                ? value.length >= maxLength 
+                  ? 'text-red-500' 
+                  : 'text-yellow-500'
+                : 'text-gray-500'
+            ) : 'text-gray-500'
           }`}>
-            {value.length}/{maxLength}
+            {maxLength ? `${value.length}/${maxLength}` : `${value.length} characters`}
           </span>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { 
   TaskFormData, 
   taskFormSchema, 
@@ -38,6 +38,12 @@ export function useTaskForm({
   const updateTaskMutation = useUpdateTask();
   const [fieldErrors, setFieldErrors] = useState<FieldValidationState>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const touchedRef = useRef<Record<string, boolean>>({});
+
+  // Update ref whenever touched state changes
+  useEffect(() => {
+    touchedRef.current = touched;
+  }, [touched]);
 
   const isEditing = !!task;
   
@@ -49,16 +55,16 @@ export function useTaskForm({
     shouldFocusError: true,
   });
 
-  // Real-time validation handler
+  // Real-time validation handler - using ref to avoid dependency issues
   const validateField = useCallback((fieldName: string, value: string) => {
-    if (!enableRealTimeValidation || !touched[fieldName]) return;
+    if (!enableRealTimeValidation || !touchedRef.current[fieldName]) return;
     
     const error = validateFormField(fieldName, value);
     setFieldErrors(prev => ({
       ...prev,
       [fieldName]: error
     }));
-  }, [enableRealTimeValidation, touched]);
+  }, [enableRealTimeValidation]);
 
   // Handle field blur to mark as touched
   const handleFieldBlur = useCallback((fieldName: string) => {
@@ -92,12 +98,14 @@ export function useTaskForm({
       form.reset(taskToFormData(task));
       setTouched({});
       setFieldErrors({});
+      touchedRef.current = {};
     } else {
       form.reset(defaultTaskFormValues);
       setTouched({});
       setFieldErrors({});
+      touchedRef.current = {};
     }
-  }, [task, form]);
+  }, [task]);
 
   const handleSubmit = async (data: TaskFormData) => {
     try {
@@ -195,14 +203,20 @@ export function useTaskForm({
     errors: form.formState.errors,
     // Validation helpers
     clearFieldError: (fieldName: string) => {
-      setFieldErrors(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName as keyof FieldValidationState];
+        return newErrors;
+      });
     },
     clearAllErrors: () => {
       setFieldErrors({});
-      form.clearErrors();
+      setTouched({});
+      if (form.clearErrors) {
+        form.clearErrors();
+      } else {
+        form.reset(form.getValues());
+      }
     },
   };
 }

@@ -22,10 +22,13 @@ export const LoadingSpinner = ({
 
   return (
     <div className={cn("flex items-center justify-center", className)}>
-      <Loader2 className={cn(
-        "animate-spin text-blue-600",
-        sizeClasses[size]
-      )} />
+      <Loader2 
+        data-testid="loading-spinner"
+        className={cn(
+          "animate-spin text-blue-600",
+          sizeClasses[size]
+        )} 
+      />
       {text && (
         <span className="ml-2 text-sm text-gray-600">
           {text}
