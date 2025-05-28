@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { FormField, FormTextarea, FormSelect } from '@/components/ui/form-field';
+import { ArrowLeft, Edit, AlertCircle, CheckCircle } from 'lucide-react';
 import { ApiTaskStatus } from '@/types/task';
 import { useTask, useUpdateTask } from '@/hooks/use-tasks';
 import { useTaskForm } from '@/hooks/use-task-form';
@@ -20,13 +21,18 @@ export default function EditTaskPage() {
   const { data: task, isLoading, error: loadError } = useTask(taskId);
   
   const {
-    register,
+    registerWithValidation,
+    registerTextareaWithValidation,
+    registerSelectWithValidation,
     handleSubmit,
     formState: { errors },
+    fieldErrors,
+    touched,
     isLoading: formLoading,
     error: formError
   } = useTaskForm({
     task,
+    enableRealTimeValidation: true,
     onSuccess: () => {
       router.push('/');
     }
@@ -104,15 +110,34 @@ export default function EditTaskPage() {
             )}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Task Title *</Label>
-                <Input
-                  id="title"
-                  type="text"
-                  {...register('title')}
-                  placeholder="Enter task title"
-                />
-                {errors.title && (
-                  <p className="text-sm text-red-600">{errors.title.message}</p>
+                <Label htmlFor="title" className="flex items-center gap-1">
+                  Task Title
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="title"
+                    type="text"
+                    {...registerWithValidation('title')}
+                    placeholder="Enter task title"
+                    disabled
+                    className="pr-10 border-gray-300 bg-gray-50"
+                  />
+                  {touched.title && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {fieldErrors.title ? (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {fieldErrors.title && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {fieldErrors.title}
+                  </p>
                 )}
                 <p className="text-xs text-gray-500">
                   Note: Title editing is not supported by the current API
@@ -121,14 +146,29 @@ export default function EditTaskPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <textarea
-                  id="description"
-                  {...register('description')}
-                  placeholder="Enter task description (optional)"
-                  className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {errors.description && (
-                  <p className="text-sm text-red-600">{errors.description.message}</p>
+                <div className="relative">
+                  <textarea
+                    id="description"
+                    {...registerTextareaWithValidation('description')}
+                    placeholder="Enter task description (optional)"
+                    disabled
+                    className="w-full min-h-[100px] px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                  />
+                  {touched.description && (
+                    <div className="absolute right-3 top-3">
+                      {fieldErrors.description ? (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {fieldErrors.description && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {fieldErrors.description}
+                  </p>
                 )}
                 <p className="text-xs text-gray-500">
                   Note: Description editing is not supported by the current API
@@ -136,18 +176,35 @@ export default function EditTaskPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  {...register('status')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="TO_DO">To Do</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="DONE">Done</option>
-                </select>
-                {errors.status && (
-                  <p className="text-sm text-red-600">{errors.status.message}</p>
+                <Label htmlFor="status" className="flex items-center gap-1">
+                  Status
+                  <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <select
+                    id="status"
+                    {...registerSelectWithValidation('status')}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="TO_DO">To Do</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="DONE">Done</option>
+                  </select>
+                  {touched.status && (
+                    <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                      {fieldErrors.status ? (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {fieldErrors.status && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {fieldErrors.status}
+                  </p>
                 )}
               </div>
 

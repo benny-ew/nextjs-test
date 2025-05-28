@@ -7,10 +7,23 @@ export const taskFormSchema = z.object({
     .string()
     .min(1, 'Task title is required')
     .max(200, 'Task title must be less than 200 characters')
-    .trim(),
+    .refine((val) => val.trim().length > 0, {
+      message: 'Task title cannot be empty or contain only spaces',
+    })
+    .refine((val) => val.trim().length >= 3, {
+      message: 'Task title must be at least 3 characters long',
+    })
+    .refine((val) => !/^\s/.test(val) && !/\s$/.test(val), {
+      message: 'Task title cannot start or end with spaces',
+    })
+    .transform((val) => val.trim()),
   description: z
     .string()
     .max(1000, 'Description must be less than 1000 characters')
+    .refine((val) => !val || val.trim().length === 0 || val.trim().length >= 5, {
+      message: 'Description must be either empty or at least 5 characters long',
+    })
+    .transform((val) => val?.trim() || '')
     .optional()
     .or(z.literal('')),
   status: z.enum(['TO_DO', 'IN_PROGRESS', 'DONE'] as const, {
@@ -77,3 +90,64 @@ export const taskToFormData = (task: {
   description: task.description || '',
   status: task.status,
 });
+
+// Real-time validation schema (for immediate feedback)
+export const realtimeValidationSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .min(3, 'Title must be at least 3 characters')
+    .max(200, 'Title is too long (max 200 characters)')
+    .refine((val) => val.trim().length > 0, {
+      message: 'Title cannot be empty',
+    }),
+  description: z
+    .string()
+    .max(1000, 'Description is too long (max 1000 characters)')
+    .refine((val) => !val || val.length === 0 || val.trim().length >= 5, {
+      message: 'Description must be at least 5 characters or empty',
+    })
+    .optional(),
+  status: z.enum(['TO_DO', 'IN_PROGRESS', 'DONE'] as const),
+});
+
+// Individual field validation functions for real-time feedback
+export const validateTitle = (title: string): string | null => {
+  if (!title) return 'Title is required';
+  if (title.trim().length === 0) return 'Title cannot be empty';
+  if (title.trim().length < 3) return 'Title must be at least 3 characters';
+  if (title.length > 200) return 'Title is too long (max 200 characters)';
+  if (/^\s/.test(title)) return 'Title cannot start with spaces';
+  if (/\s$/.test(title)) return 'Title cannot end with spaces';
+  return null;
+};
+
+export const validateDescription = (description: string): string | null => {
+  if (!description) return null; // Description is optional
+  if (description.length > 1000) return 'Description is too long (max 1000 characters)';
+  if (description.trim().length > 0 && description.trim().length < 5) {
+    return 'Description must be at least 5 characters or empty';
+  }
+  return null;
+};
+
+export const validateStatus = (status: string): string | null => {
+  const validStatuses = ['TO_DO', 'IN_PROGRESS', 'DONE'];
+  if (!status) return 'Status is required';
+  if (!validStatuses.includes(status)) return 'Invalid status selected';
+  return null;
+};
+
+// Validation helper for form state
+export const validateFormField = (field: string, value: string): string | null => {
+  switch (field) {
+    case 'title':
+      return validateTitle(value);
+    case 'description':
+      return validateDescription(value);
+    case 'status':
+      return validateStatus(value);
+    default:
+      return null;
+  }
+};

@@ -3,29 +3,37 @@
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FormField, FormTextarea, FormSelect } from '@/components/ui/form-field';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { ApiTaskStatus } from '@/types/task';
-import { useCreateTask } from '@/hooks/use-tasks';
 import { useTaskForm } from '@/hooks/use-task-form';
 
 export default function CreateTaskPage() {
   const router = useRouter();
   
   const {
+    registerWithValidation,
+    registerTextareaWithValidation,
+    registerSelectWithValidation,
     register,
+    watch,
     handleSubmit,
     formState: { errors },
     isLoading,
-    error
+    error,
+    fieldErrors,
+    touched,
+    handleFieldBlur
   } = useTaskForm({
     onSuccess: () => {
       router.push('/');
-    }
+    },
+    enableRealTimeValidation: true
   });
+
+  const titleValue = watch('title') || '';
+  const descriptionValue = watch('description') || '';
 
   const handleBack = () => {
     router.push('/');
@@ -68,48 +76,67 @@ export default function CreateTaskPage() {
                 className="mb-4"
               />
             )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Task Title *</Label>
-                <Input
-                  id="title"
-                  type="text"
-                  {...register('title')}
-                  placeholder="Enter task title"
-                />
-                {errors.title && (
-                  <p className="text-sm text-red-600">{errors.title.message}</p>
-                )}
-              </div>
+              <FormField
+                id="title"
+                label="Task Title"
+                required
+                placeholder="Enter a descriptive task title"
+                maxLength={200}
+                showCharCount
+                validIcon
+                error={errors.title?.message}
+                fieldError={fieldErrors.title}
+                touched={touched.title}
+                value={titleValue}
+                helpText="Give your task a clear, concise title that describes what needs to be done"
+                registration={{
+                  ...registerWithValidation('title'),
+                  onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+                    handleFieldBlur('title');
+                  }
+                }}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <textarea
-                  id="description"
-                  {...register('description')}
-                  placeholder="Enter task description (optional)"
-                  className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {errors.description && (
-                  <p className="text-sm text-red-600">{errors.description.message}</p>
-                )}
-              </div>
+              <FormTextarea
+                id="description"
+                label="Description"
+                placeholder="Add more details about this task (optional)"
+                maxLength={1000}
+                rows={4}
+                showCharCount
+                error={errors.description?.message}
+                fieldError={fieldErrors.description}
+                touched={touched.description}
+                value={descriptionValue}
+                helpText="Provide additional context, requirements, or notes for this task"
+                registration={{
+                  ...registerTextareaWithValidation('description'),
+                  onBlur: (e: React.FocusEvent<HTMLTextAreaElement>) => {
+                    handleFieldBlur('description');
+                  }
+                }}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  {...register('status')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="TO_DO">To Do</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="DONE">Done</option>
-                </select>
-                {errors.status && (
-                  <p className="text-sm text-red-600">{errors.status.message}</p>
-                )}
-              </div>
+              <FormSelect
+                id="status"
+                label="Initial Status"
+                required
+                error={errors.status?.message}
+                fieldError={fieldErrors.status}
+                touched={touched.status}
+                helpText="Choose the starting status for this task"
+                registration={{
+                  ...registerSelectWithValidation('status'),
+                  onBlur: () => handleFieldBlur('status')
+                }}
+              >
+                <option value="">Select a status</option>
+                <option value="TO_DO">📋 To Do</option>
+                <option value="IN_PROGRESS">⚡ In Progress</option>
+                <option value="DONE">✅ Done</option>
+              </FormSelect>
 
               <div className="flex gap-3 pt-4">
                 <Button
@@ -118,7 +145,7 @@ export default function CreateTaskPage() {
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 flex items-center gap-2"
                 >
                   {isLoading && <LoadingSpinner size="sm" />}
-                  {isLoading ? 'Creating...' : 'Create Task'}
+                  {isLoading ? 'Creating Task...' : 'Create Task'}
                 </Button>
                 <Button
                   type="button"
