@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { Column } from '@/components/Column';
 import { Pagination } from '@/components/Pagination';
@@ -13,23 +13,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Plus } from 'lucide-react';
 import { Task, ApiTaskStatus, PaginationInfo } from '@/types/task';
-import { ApiError } from '@/types/api';
-import { taskApi } from '@/lib/api';
-import { getUserFriendlyErrorMessage } from '@/lib/error-handler';
+import { useTasks, useUpdateTaskStatus, useDeleteTask, taskKeys } from '@/hooks/use-tasks';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 
 export const KanbanBoard = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    itemsPerPage: 10,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { toasts, removeToast } = useToast();
+  
+  // State for pagination and UI
+  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
@@ -40,58 +35,44 @@ export const KanbanBoard = () => {
     taskId: '',
     taskTitle: '',
   });
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [dragLoading, setDragLoading] = useState<string | null>(null);
 
-  const { toasts, removeToast, showSuccess, showError } = useToast();
+  // React Query hooks
+  const {
+    data: tasksData,
+    isLoading,
+    error,
+    refetch,
+  } = useTasks({ page: currentPage, limit: itemsPerPage });
 
-  // Load tasks on component mount
-  useEffect(() => {
-    loadTasks();
-  }, []);
+  const updateTaskStatus = useUpdateTaskStatus();
+  const deleteTask = useDeleteTask();
 
-  // Reload tasks when items per page changes
-  useEffect(() => {
-    if (pagination.currentPage > 1) {
-      loadTasks(1); // Reset to first page when changing page size
-    } else {
-      loadTasks();
-    }
-  }, [itemsPerPage]);
-
-  const loadTasks = async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await taskApi.getTasks({ page, limit: itemsPerPage });
-      setTasks(result.tasks);
-      setPagination(result.pagination);
-    } catch (err) {
-      const errorMessage = err instanceof Object && 'message' in err 
-        ? getUserFriendlyErrorMessage(err as ApiError)
-        : 'Failed to load tasks. Please try again.';
-      setError(errorMessage);
-      showError(errorMessage);
-      console.error('Error loading tasks:', err);
-    } finally {
-      setLoading(false);
-    }
+  // Derived data
+  const tasks = tasksData?.tasks || [];
+  const pagination = tasksData?.pagination || {
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPreviousPage: false,
   };
 
   const handlePageChange = (page: number) => {
-    loadTasks(page);
+    setCurrentPage(page);
   };
 
   const handlePageSizeChange = (newPageSize: number) => {
     setItemsPerPage(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   const handleCreateTask = () => {
-    window.location.href = '/tasks/create';
+    router.push('/tasks/create');
   };
 
   const handleEditTask = (task: Task) => {
-    window.location.href = `/tasks/edit/${task.id}`;
+    router.push(`/tasks/edit/${task.id}`);
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -107,29 +88,11 @@ export const KanbanBoard = () => {
 
   const confirmDeleteTask = async () => {
     try {
-      setDeleteLoading(true);
-      await taskApi.deleteTask(deleteDialog.taskId);
-      
-      // Remove task from local state
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== deleteDialog.taskId));
-      
-      // Close dialog
+      await deleteTask.mutateAsync(deleteDialog.taskId);
       setDeleteDialog({ isOpen: false, taskId: '', taskTitle: '' });
-      
-      // Show success message
-      showSuccess(`Task "${deleteDialog.taskTitle}" deleted successfully`);
-      
-      // Reload tasks to get updated pagination info
-      await loadTasks(pagination.currentPage);
-    } catch (err) {
-      const errorMessage = err instanceof Object && 'message' in err 
-        ? getUserFriendlyErrorMessage(err as ApiError)
-        : 'Failed to delete task. Please try again.';
-      setError(errorMessage);
-      showError(errorMessage);
-      console.error('Error deleting task:', err);
-    } finally {
-      setDeleteLoading(false);
+    } catch (error) {
+      // Error handling is managed by the mutation hook
+      console.error('Error deleting task:', error);
     }
   };
 
@@ -153,41 +116,15 @@ export const KanbanBoard = () => {
 
     const newStatus = destination.droppableId as ApiTaskStatus;
     
-    // Set loading state for this specific task
-    setDragLoading(draggableId);
-    
-    // Optimistically update the UI
-    const updatedTasks = tasks.map(task =>
-      task.id === draggableId
-        ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
-        : task
-    );
-    setTasks(updatedTasks);
-
-    // Update on the server
+    // Update task status using React Query mutation with optimistic updates
     try {
-      // Find the task to get its current data
-      const taskToUpdate = tasks.find(task => task.id === draggableId);
-      if (taskToUpdate) {
-        await taskApi.updateTask(draggableId, {
-          title: taskToUpdate.title,
-          description: taskToUpdate.description,
-          status: newStatus,
-        });
-        
-        showSuccess(`Task moved to ${destination.droppableId.replace('_', ' ').toLowerCase()}`);
-      }
-    } catch (err) {
-      // Revert the optimistic update on error
-      setTasks(tasks);
-      const errorMessage = err instanceof Object && 'message' in err 
-        ? getUserFriendlyErrorMessage(err as ApiError)
-        : 'Failed to update task status. Please try again.';
-      setError(errorMessage);
-      showError(errorMessage);
-      console.error('Error updating task:', err);
-    } finally {
-      setDragLoading(null);
+      await updateTaskStatus.mutateAsync({
+        taskId: draggableId,
+        status: newStatus,
+      });
+    } catch (error) {
+      // Error handling is managed by the mutation hook
+      console.error('Error updating task status:', error);
     }
   };
 
@@ -201,7 +138,7 @@ export const KanbanBoard = () => {
     { id: 'DONE' as ApiTaskStatus, title: 'Done', tasks: getTasksByStatus('DONE') },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <LoadingSpinner size="lg" text="Loading tasks..." />
@@ -212,8 +149,8 @@ export const KanbanBoard = () => {
   if (error) {
     return (
       <ErrorMessage
-        message={error}
-        onRetry={() => loadTasks(pagination.currentPage)}
+        message={error instanceof Error ? error.message : 'Failed to load tasks'}
+        onRetry={() => refetch()}
         variant="card"
         className="max-w-md mx-auto"
       />
@@ -241,7 +178,7 @@ export const KanbanBoard = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add New Task
           </Button>
-          <Button onClick={() => loadTasks(pagination.currentPage)} variant="outline" size="sm">
+          <Button onClick={() => refetch()} variant="outline" size="sm" disabled={isLoading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -251,7 +188,7 @@ export const KanbanBoard = () => {
       <PageSizeSelector 
         currentPageSize={itemsPerPage}
         onPageSizeChange={handlePageSizeChange}
-        loading={loading}
+        loading={isLoading}
       />
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -264,7 +201,7 @@ export const KanbanBoard = () => {
               tasks={column.tasks}
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
-              dragLoading={dragLoading}
+              dragLoading={updateTaskStatus.isPending ? updateTaskStatus.variables?.taskId || null : null}
             />
           ))}
         </div>
@@ -273,7 +210,7 @@ export const KanbanBoard = () => {
       <Pagination 
         pagination={pagination} 
         onPageChange={handlePageChange}
-        loading={loading}
+        loading={isLoading}
       />
 
       <div className="text-center text-sm text-gray-600">
@@ -288,7 +225,7 @@ export const KanbanBoard = () => {
         taskTitle={deleteDialog.taskTitle}
         onConfirm={confirmDeleteTask}
         onCancel={cancelDeleteTask}
-        loading={deleteLoading}
+        loading={deleteTask.isPending}
       />
     </div>
     </>

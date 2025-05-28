@@ -1,4 +1,4 @@
-// export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+export type TaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'DONE';
 
 // API response types
 export type ApiTaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'DONE';
