@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Edit, Loader2 } from 'lucide-react';
-import { Task, TaskStatus, TaskPriority } from '@/types/task';
+import { Task, TaskStatus } from '@/types/task';
 import { taskApi } from '@/lib/api';
 
 export default function EditTaskPage() {
@@ -22,8 +22,6 @@ export default function EditTaskPage() {
     title: '',
     description: '',
     status: 'TODO' as TaskStatus,
-    priority: 'medium' as TaskPriority,
-    assignee: '',
   });
 
   useEffect(() => {
@@ -44,8 +42,6 @@ export default function EditTaskPage() {
           title: foundTask.title,
           description: foundTask.description || '',
           status: foundTask.status,
-          priority: foundTask.priority || 'medium',
-          assignee: foundTask.assignee || '',
         });
       } else {
         alert('Task not found');
@@ -71,13 +67,14 @@ export default function EditTaskPage() {
     try {
       setSaving(true);
       
-      // For now, we'll use the updateTaskStatus for status updates
-      // In a real implementation, you'd want an updateTask endpoint
-      if (task && formData.status !== task.status) {
-        await taskApi.updateTaskStatus(taskId, formData.status);
-      }
+      // Use PUT request to update the entire task
+      await taskApi.updateTask(taskId, {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+      });
       
-      alert('Task updated successfully! Note: Only status updates are currently supported via the API.');
+      alert('Task updated successfully!');
       router.push('/');
     } catch (err) {
       console.error('Error updating task:', err);
@@ -176,59 +173,24 @@ export default function EditTaskPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <select
-                    id="status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="TODO">To Do</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="DONE">Done</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <select
-                    id="priority"
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                  <p className="text-xs text-gray-500">
-                    Note: Priority editing is not supported by the current API
-                  </p>
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <Label htmlFor="assignee">Assignee</Label>
-                <Input
-                  id="assignee"
-                  type="text"
-                  value={formData.assignee}
-                  onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                  placeholder="Enter assignee name (optional)"
-                  disabled
-                />
-                <p className="text-xs text-gray-500">
-                  Note: Assignee editing is not supported by the current API
-                </p>
+                <Label htmlFor="status">Status</Label>
+                <select
+                  id="status"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="TODO">To Do</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="DONE">Done</option>
+                </select>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
                   <strong>API Limitation:</strong> The current API only supports updating task status. 
-                  Other fields are displayed for reference but cannot be modified.
+                  Title and description are displayed for reference but cannot be modified.
                 </p>
               </div>
 

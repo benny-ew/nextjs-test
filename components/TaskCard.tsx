@@ -2,9 +2,8 @@
 
 import { Draggable } from '@hello-pangea/dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { Task } from '@/types/task';
 
 interface TaskCardProps {
@@ -13,12 +12,6 @@ interface TaskCardProps {
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
 }
-
-const priorityColors = {
-  low: 'bg-green-100 text-green-800 border-green-200',
-  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  high: 'bg-red-100 text-red-800 border-red-200',
-};
 
 export const TaskCard = ({ task, index, onEdit, onDelete }: TaskCardProps) => {
   const handleEdit = (e: React.MouseEvent) => {
@@ -63,14 +56,6 @@ export const TaskCard = ({ task, index, onEdit, onDelete }: TaskCardProps) => {
                   {task.title}
                 </CardTitle>
                 <div className="flex items-center gap-1 ml-2">
-                  {task.priority && (
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs border ${priorityColors[task.priority]}`}
-                    >
-                      {task.priority}
-                    </Badge>
-                  )}
                   {/* Action buttons */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <Button
@@ -95,23 +80,11 @@ export const TaskCard = ({ task, index, onEdit, onDelete }: TaskCardProps) => {
                 </div>
               </div>
             </CardHeader>
-            {(task.description || task.assignee) && (
+            {task.description && (
               <CardContent className="pt-0">
-                {task.description && (
-                  <p className="text-sm text-gray-600 mb-2">
-                    {task.description}
-                  </p>
-                )}
-                {task.assignee && (
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-medium mr-2 shadow-sm">
-                      {task.assignee.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <span className="text-xs text-gray-600">
-                      {task.assignee}
-                    </span>
-                  </div>
-                )}
+                <p className="text-sm text-gray-600 mb-2">
+                  {task.description}
+                </p>
               </CardContent>
             )}
           </Card>

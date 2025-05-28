@@ -143,7 +143,15 @@ export const KanbanBoard = () => {
 
     // Update on the server
     try {
-      await taskApi.updateTaskStatus(draggableId, newStatus);
+      // Find the task to get its current data
+      const taskToUpdate = tasks.find(task => task.id === draggableId);
+      if (taskToUpdate) {
+        await taskApi.updateTask(draggableId, {
+          title: taskToUpdate.title,
+          description: taskToUpdate.description,
+          status: newStatus,
+        });
+      }
     } catch (err) {
       // Revert the optimistic update on error
       setTasks(tasks);

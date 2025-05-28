@@ -81,6 +81,22 @@ export const taskApi = {
     return { tasks, pagination: paginationInfo };
   },
 
+  async getTask(taskId: string): Promise<Task> {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch task: ${response.statusText}`);
+    }
+    
+    const apiTask: ApiTask = await response.json();
+    return taskFromApi(apiTask);
+  },
+
   async updateTaskStatus(taskId: string, newStatus: TaskStatus): Promise<Task> {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
       method: 'PATCH',
@@ -88,6 +104,23 @@ export const taskApi = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ status: statusToApi(newStatus) }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update task: ${response.statusText}`);
+    }
+    
+    const apiTask: ApiTask = await response.json();
+    return taskFromApi(apiTask);
+  },
+
+  async updateTask(taskId: string, task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(taskToApi(task)),
     });
     
     if (!response.ok) {

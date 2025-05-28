@@ -1,5 +1,4 @@
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
-export type TaskPriority = 'low' | 'medium' | 'high';
 
 // API response types
 export type ApiTaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'DONE';
@@ -9,8 +8,6 @@ export interface ApiTask {
   title: string;
   description?: string;
   status: ApiTaskStatus;
-  priority?: TaskPriority;
-  assignee?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,8 +39,6 @@ export interface Task {
   title: string;
   description?: string;
   status: TaskStatus;
-  priority?: TaskPriority;
-  assignee?: string;
   createdAt: string;
   updatedAt: string;
 }
