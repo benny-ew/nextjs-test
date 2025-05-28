@@ -4,23 +4,24 @@ import { Droppable } from '@hello-pangea/dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TaskCard } from '@/components/TaskCard';
-import { Task, TaskStatus } from '@/types/task';
+import { Task, ApiTaskStatus } from '@/types/task';
 
 interface ColumnProps {
-  id: TaskStatus;
+  id: ApiTaskStatus;
   title: string;
   tasks: Task[];
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
+  dragLoading?: string | null;
 }
 
 const statusColors = {
-  TODO: 'bg-slate-100 text-slate-800 border-slate-200',
+  TO_DO: 'bg-slate-100 text-slate-800 border-slate-200',
   IN_PROGRESS: 'bg-blue-100 text-blue-800 border-blue-200',
   DONE: 'bg-green-100 text-green-800 border-green-200',
 };
 
-export const Column = ({ id, title, tasks, onEditTask, onDeleteTask }: ColumnProps) => {
+export const Column = ({ id, title, tasks, onEditTask, onDeleteTask, dragLoading }: ColumnProps) => {
   return (
     <Card className="h-fit bg-white border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
       <CardHeader className="pb-4">
@@ -50,6 +51,7 @@ export const Column = ({ id, title, tasks, onEditTask, onDeleteTask }: ColumnPro
                   index={index} 
                   onEdit={onEditTask}
                   onDelete={onDeleteTask}
+                  isLoading={dragLoading === task.id}
                 />
               ))}
               {provided.placeholder}

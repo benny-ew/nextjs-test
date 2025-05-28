@@ -57,7 +57,7 @@ interface Task {
   id: string;
   title: string;
   description?: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  status: 'TO_DO' | 'IN_PROGRESS' | 'DONE';
   priority?: 'low' | 'medium' | 'high';
   assignee?: string;
   createdAt: string; // ISO date string
@@ -113,7 +113,7 @@ try {
 
 ## Features Included
 
-✅ **Drag and Drop**: Cards can be dragged between TODO, IN_PROGRESS, and DONE columns  
+✅ **Drag and Drop**: Cards can be dragged between TO_DO, IN_PROGRESS, and DONE columns  
 ✅ **Dark/Light Theme**: Toggle between themes using the button in the top right  
 ✅ **Responsive Design**: Works on desktop, tablet, and mobile  
 ✅ **Loading States**: Shows loading spinner while fetching data  

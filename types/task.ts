@@ -1,4 +1,4 @@
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+// export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 
 // API response types
 export type ApiTaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'DONE';
@@ -38,13 +38,13 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: TaskStatus;
+  status: ApiTaskStatus;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Column {
-  id: TaskStatus;
+  id: ApiTaskStatus;
   title: string;
   tasks: Task[];
 }

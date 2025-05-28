@@ -3,6 +3,7 @@
 import { Draggable } from '@hello-pangea/dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Edit, Trash2 } from 'lucide-react';
 import { Task } from '@/types/task';
 
@@ -11,9 +12,10 @@ interface TaskCardProps {
   index: number;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
+  isLoading?: boolean;
 }
 
-export const TaskCard = ({ task, index, onEdit, onDelete }: TaskCardProps) => {
+export const TaskCard = ({ task, index, onEdit, onDelete, isLoading = false }: TaskCardProps) => {
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit?.(task);
@@ -49,11 +51,12 @@ export const TaskCard = ({ task, index, onEdit, onDelete }: TaskCardProps) => {
               snapshot.isDragging 
                 ? 'shadow-2xl shadow-blue-500/30 ring-2 ring-blue-500 bg-background border-blue-500 rotate-2 scale-105' 
                 : 'transition-all duration-200'
-            }`}>
+            } ${isLoading ? 'opacity-75' : ''}`}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <CardTitle className="text-sm font-medium leading-tight text-gray-900">
+                <CardTitle className="text-sm font-medium leading-tight text-gray-900 flex items-center gap-2">
                   {task.title}
+                  {isLoading && <LoadingSpinner size="sm" />}
                 </CardTitle>
                 <div className="flex items-center gap-1 ml-2">
                   {/* Action buttons */}

@@ -6,9 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Edit, Loader2 } from 'lucide-react';
-import { Task, TaskStatus } from '@/types/task';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
+import { ToastContainer } from '@/components/ui/toast';
+import { ArrowLeft, Edit } from 'lucide-react';
+import { Task, ApiTaskStatus } from '@/types/task';
+import { ApiError } from '@/types/api';
 import { taskApi } from '@/lib/api';
+import { getUserFriendlyErrorMessage } from '@/lib/error-handler';
+import { useToast } from '@/hooks/use-toast';
 
 export default function EditTaskPage() {
   const router = useRouter();
@@ -17,12 +23,15 @@ export default function EditTaskPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [task, setTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    status: 'TODO' as TaskStatus,
+    status: 'TO_DO' as ApiTaskStatus,
   });
+
+  const { toasts, removeToast, showSuccess, showError } = useToast();
 
   useEffect(() => {
     loadTask();
@@ -31,6 +40,7 @@ export default function EditTaskPage() {
   const loadTask = async () => {
     try {
       setLoading(true);
+      setError(null);
       // Since we don't have a getTask by ID endpoint in the current API,
       // we'll need to get all tasks and find the one we want
       const result = await taskApi.getTasks();
@@ -44,13 +54,16 @@ export default function EditTaskPage() {
           status: foundTask.status,
         });
       } else {
-        alert('Task not found');
-        router.push('/');
+        setError('Task not found');
+        showError('Task not found');
       }
     } catch (err) {
+      const errorMessage = err instanceof Object && 'message' in err 
+        ? getUserFriendlyErrorMessage(err as ApiError)
+        : 'Failed to load task';
+      setError(errorMessage);
+      showError(errorMessage);
       console.error('Error loading task:', err);
-      alert('Failed to load task');
-      router.push('/');
     } finally {
       setLoading(false);
     }
@@ -60,12 +73,13 @@ export default function EditTaskPage() {
     e.preventDefault();
     
     if (!formData.title.trim()) {
-      alert('Task title is required');
+      setError('Task title is required');
       return;
     }
 
     try {
       setSaving(true);
+      setError(null);
       
       // Use PUT request to update the entire task
       await taskApi.updateTask(taskId, {
@@ -74,11 +88,19 @@ export default function EditTaskPage() {
         status: formData.status,
       });
       
-      alert('Task updated successfully!');
-      router.push('/');
+      showSuccess('Task updated successfully!');
+      
+      // Navigate back to the main board after a short delay
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
     } catch (err) {
+      const errorMessage = err instanceof Object && 'message' in err 
+        ? getUserFriendlyErrorMessage(err as ApiError)
+        : 'Failed to update task. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
       console.error('Error updating task:', err);
-      alert('Failed to update task. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -91,32 +113,44 @@ export default function EditTaskPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading task...</span>
+        <div className="flex flex-col items-center gap-3">
+          <LoadingSpinner size="lg" text="Loading task..." />
         </div>
       </div>
     );
   }
 
-  if (!task) {
+  if (!task && !loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6">
-            <p className="text-center text-gray-600">Task not found</p>
-            <Button onClick={handleBack} className="w-full mt-4">
-              Back to Board
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Card className="max-w-md">
+            <CardContent className="pt-6">
+              {error ? (
+                <ErrorMessage
+                  message={error}
+                  onRetry={loadTask}
+                  variant="card"
+                />
+              ) : (
+                <p className="text-center text-gray-600">Task not found</p>
+              )}
+              <Button onClick={handleBack} className="w-full mt-4">
+                Back to Board
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4">
+    <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-2xl mx-auto px-4">
         <div className="mb-6">
           <Button 
             variant="outline" 
@@ -143,6 +177,14 @@ export default function EditTaskPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {error && (
+              <ErrorMessage
+                message={error}
+                onRetry={() => setError(null)}
+                variant="inline"
+                className="mb-4"
+              />
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">Task Title *</Label>
@@ -178,10 +220,10 @@ export default function EditTaskPage() {
                 <select
                   id="status"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as ApiTaskStatus })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="TODO">To Do</option>
+                  <option value="TO_DO">To Do</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="DONE">Done</option>
                 </select>
@@ -198,8 +240,9 @@ export default function EditTaskPage() {
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 flex items-center gap-2"
                 >
+                  {saving && <LoadingSpinner size="sm" />}
                   {saving ? 'Updating...' : 'Update Task'}
                 </Button>
                 <Button
@@ -215,24 +258,27 @@ export default function EditTaskPage() {
           </CardContent>
         </Card>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-sm">Task Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Created:</span>
-                <p className="text-gray-600">{new Date(task.createdAt).toLocaleString()}</p>
+        {task && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-sm">Task Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Created:</span>
+                  <p className="text-gray-600">{new Date(task.createdAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <span className="font-medium">Updated:</span>
+                  <p className="text-gray-600">{new Date(task.updatedAt).toLocaleString()}</p>
+                </div>
               </div>
-              <div>
-                <span className="font-medium">Updated:</span>
-                <p className="text-gray-600">{new Date(task.updatedAt).toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
+    </>
   );
 }

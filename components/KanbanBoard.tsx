@@ -6,11 +6,17 @@ import { Column } from '@/components/Column';
 import { Pagination } from '@/components/Pagination';
 import { PageSizeSelector } from '@/components/PageSizeSelector';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
+import { ToastContainer } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, Plus, Edit } from 'lucide-react';
-import { Task, TaskStatus, PaginationInfo } from '@/types/task';
+import { RefreshCw, Plus } from 'lucide-react';
+import { Task, ApiTaskStatus, PaginationInfo } from '@/types/task';
+import { ApiError } from '@/types/api';
 import { taskApi } from '@/lib/api';
+import { getUserFriendlyErrorMessage } from '@/lib/error-handler';
+import { useToast } from '@/hooks/use-toast';
 
 export const KanbanBoard = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -35,6 +41,9 @@ export const KanbanBoard = () => {
     taskTitle: '',
   });
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [dragLoading, setDragLoading] = useState<string | null>(null);
+
+  const { toasts, removeToast, showSuccess, showError } = useToast();
 
   // Load tasks on component mount
   useEffect(() => {
@@ -58,7 +67,11 @@ export const KanbanBoard = () => {
       setTasks(result.tasks);
       setPagination(result.pagination);
     } catch (err) {
-      setError('Failed to load tasks');
+      const errorMessage = err instanceof Object && 'message' in err 
+        ? getUserFriendlyErrorMessage(err as ApiError)
+        : 'Failed to load tasks. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
       console.error('Error loading tasks:', err);
     } finally {
       setLoading(false);
@@ -103,10 +116,17 @@ export const KanbanBoard = () => {
       // Close dialog
       setDeleteDialog({ isOpen: false, taskId: '', taskTitle: '' });
       
+      // Show success message
+      showSuccess(`Task "${deleteDialog.taskTitle}" deleted successfully`);
+      
       // Reload tasks to get updated pagination info
       await loadTasks(pagination.currentPage);
     } catch (err) {
-      setError('Failed to delete task');
+      const errorMessage = err instanceof Object && 'message' in err 
+        ? getUserFriendlyErrorMessage(err as ApiError)
+        : 'Failed to delete task. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
       console.error('Error deleting task:', err);
     } finally {
       setDeleteLoading(false);
@@ -131,7 +151,10 @@ export const KanbanBoard = () => {
       return;
     }
 
-    const newStatus = destination.droppableId as TaskStatus;
+    const newStatus = destination.droppableId as ApiTaskStatus;
+    
+    // Set loading state for this specific task
+    setDragLoading(draggableId);
     
     // Optimistically update the UI
     const updatedTasks = tasks.map(task =>
@@ -151,52 +174,56 @@ export const KanbanBoard = () => {
           description: taskToUpdate.description,
           status: newStatus,
         });
+        
+        showSuccess(`Task moved to ${destination.droppableId.replace('_', ' ').toLowerCase()}`);
       }
     } catch (err) {
       // Revert the optimistic update on error
       setTasks(tasks);
-      setError('Failed to update task status');
+      const errorMessage = err instanceof Object && 'message' in err 
+        ? getUserFriendlyErrorMessage(err as ApiError)
+        : 'Failed to update task status. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
       console.error('Error updating task:', err);
+    } finally {
+      setDragLoading(null);
     }
   };
 
-  const getTasksByStatus = (status: TaskStatus): Task[] => {
+  const getTasksByStatus = (status: ApiTaskStatus): Task[] => {
     return tasks.filter(task => task.status === status);
   };
 
   const columns = [
-    { id: 'TODO' as TaskStatus, title: 'To Do', tasks: getTasksByStatus('TODO') },
-    { id: 'IN_PROGRESS' as TaskStatus, title: 'In Progress', tasks: getTasksByStatus('IN_PROGRESS') },
-    { id: 'DONE' as TaskStatus, title: 'Done', tasks: getTasksByStatus('DONE') },
+    { id: 'TO_DO' as ApiTaskStatus, title: 'To Do', tasks: getTasksByStatus('TO_DO') },
+    { id: 'IN_PROGRESS' as ApiTaskStatus, title: 'In Progress', tasks: getTasksByStatus('IN_PROGRESS') },
+    { id: 'DONE' as ApiTaskStatus, title: 'Done', tasks: getTasksByStatus('DONE') },
   ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Loading tasks...</span>
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <LoadingSpinner size="lg" text="Loading tasks..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle className="text-red-600">Error</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={() => loadTasks(pagination.currentPage)} variant="outline">
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
+      <ErrorMessage
+        message={error}
+        onRetry={() => loadTasks(pagination.currentPage)}
+        variant="card"
+        className="max-w-md mx-auto"
+      />
     );
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -237,6 +264,7 @@ export const KanbanBoard = () => {
               tasks={column.tasks}
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
+              dragLoading={dragLoading}
             />
           ))}
         </div>
@@ -263,5 +291,6 @@ export const KanbanBoard = () => {
         loading={deleteLoading}
       />
     </div>
+    </>
   );
 };

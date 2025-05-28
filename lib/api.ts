@@ -1,5 +1,7 @@
-import { Task, TaskStatus, ApiTask, ApiTaskStatus, ApiResponse, PaginationParams, PaginationInfo } from '@/types/task';
+import { Task, ApiTaskStatus as TaskStatus, ApiTask, ApiTaskStatus, ApiResponse, PaginationParams, PaginationInfo } from '@/types/task';
+import { ApiError } from '@/types/api';
 import { getApiConfig, logConfiguration } from '@/lib/config';
+import { parseApiError, handleNetworkError } from '@/lib/error-handler';
 
 // Get configuration
 const config = getApiConfig();
@@ -8,10 +10,47 @@ const { baseUrl: API_BASE_URL } = config;
 // Log configuration for debugging
 logConfiguration();
 
+// API request timeout (10 seconds)
+const API_TIMEOUT = 10000;
+
+// Enhanced fetch with timeout and error handling
+const fetchWithErrorHandling = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const apiError = await parseApiError(response);
+      throw apiError;
+    }
+
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error instanceof Error) {
+      throw handleNetworkError(error);
+    }
+    
+    throw error;
+  }
+};
+
 // Status mapping utilities
 const statusToApi = (status: TaskStatus): ApiTaskStatus => {
   switch (status) {
-    case 'TODO':
+    case 'TO_DO':
       return 'TO_DO';
     case 'IN_PROGRESS':
       return 'IN_PROGRESS';
@@ -25,13 +64,13 @@ const statusToApi = (status: TaskStatus): ApiTaskStatus => {
 const statusFromApi = (status: ApiTaskStatus): TaskStatus => {
   switch (status) {
     case 'TO_DO':
-      return 'TODO';
+      return 'TO_DO';
     case 'IN_PROGRESS':
       return 'IN_PROGRESS';
     case 'DONE':
       return 'DONE';
     default:
-      return 'TODO';
+      return 'TO_DO';
   }
 };
 
@@ -55,16 +94,9 @@ export const taskApi = {
     }
     
     const url = `${API_BASE_URL}/tasks${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const response = await fetch(url, {
+    const response = await fetchWithErrorHandling(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.statusText}`);
-    }
     
     const data: ApiResponse = await response.json();
     const tasks = data.tasks.map(taskFromApi);
@@ -82,83 +114,48 @@ export const taskApi = {
   },
 
   async getTask(taskId: string): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+    const response = await fetchWithErrorHandling(`${API_BASE_URL}/tasks/${taskId}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch task: ${response.statusText}`);
-    }
     
     const apiTask: ApiTask = await response.json();
     return taskFromApi(apiTask);
   },
 
   async updateTaskStatus(taskId: string, newStatus: TaskStatus): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+    const response = await fetchWithErrorHandling(`${API_BASE_URL}/tasks/${taskId}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ status: statusToApi(newStatus) }),
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to update task: ${response.statusText}`);
-    }
     
     const apiTask: ApiTask = await response.json();
     return taskFromApi(apiTask);
   },
 
   async updateTask(taskId: string, task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+    const response = await fetchWithErrorHandling(`${API_BASE_URL}/tasks/${taskId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(taskToApi(task)),
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to update task: ${response.statusText}`);
-    }
     
     const apiTask: ApiTask = await response.json();
     return taskFromApi(apiTask);
   },
 
   async createTask(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/tasks`, {
+    const response = await fetchWithErrorHandling(`${API_BASE_URL}/tasks`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(taskToApi(task)),
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to create task: ${response.statusText}`);
-    }
     
     const apiTask: ApiTask = await response.json();
     return taskFromApi(apiTask);
   },
 
   async deleteTask(taskId: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+    await fetchWithErrorHandling(`${API_BASE_URL}/tasks/${taskId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to delete task: ${response.statusText}`);
-    }
   },
 };
 
