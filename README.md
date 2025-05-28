@@ -1,4 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js + shadcn/ui + Tailwind CSS 4
+
+A modern web application built with the latest technologies:
+
+- **Next.js 15** - The React framework for production with App Router
+- **React 19** - The latest version of React
+- **TypeScript** - Type-safe JavaScript development
+- **Tailwind CSS 4** - The newest version of the utility-first CSS framework
+- **shadcn/ui** - Beautiful, accessible, and customizable UI components
+- **Turbopack** - Next-generation bundler for fast development
+
+## Features
+
+- ⚡ Lightning-fast development with Turbopack
+- 🎨 Modern, responsive design with Tailwind CSS 4
+- 🧩 Pre-built components from shadcn/ui library
+- 🌙 Dark mode support built-in
+- 📱 Mobile-first responsive design
+- 🔧 TypeScript for better developer experience
+- 🎯 SEO-optimized with Next.js App Router
 
 ## Getting Started
 
@@ -18,19 +37,56 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+## Project Structure
+
+```
+app/                    # App Router pages and layouts
+├── globals.css        # Global styles and Tailwind CSS
+├── layout.tsx         # Root layout component
+└── page.tsx           # Home page
+components/            # React components
+└── ui/               # shadcn/ui components
+lib/                  # Utility functions
+public/               # Static assets
+```
+
+## Available Components
+
+This project includes the following shadcn/ui components:
+
+- `Button` - Interactive button component
+- `Card` - Container component for content
+- `Input` - Form input component
+- `Label` - Form label component
+
+To add more components, run:
+
+```bash
+npx shadcn@latest add [component-name]
+```
+
+## Technologies
+
+This project is built with:
+
+- [Next.js](https://nextjs.org) - React framework
+- [React 19](https://react.dev) - UI library
+- [TypeScript](https://typescriptlang.org) - Type safety
+- [Tailwind CSS 4](https://tailwindcss.com) - Styling
+- [shadcn/ui](https://ui.shadcn.com) - UI components
+- [Radix UI](https://radix-ui.com) - Headless UI primitives
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+To learn more about the technologies used in this project:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [shadcn/ui Documentation](https://ui.shadcn.com)
+- [TypeScript Documentation](https://typescriptlang.org/docs)
 
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
