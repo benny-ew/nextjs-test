@@ -1,11 +1,33 @@
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+export type TaskPriority = 'low' | 'medium' | 'high';
+
+// API response types
+export type ApiTaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'DONE';
+
+export interface ApiTask {
+  id: string;
+  title: string;
+  description?: string;
+  status: ApiTaskStatus;
+  priority?: TaskPriority;
+  assignee?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiResponse {
+  tasks: ApiTask[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 export interface Task {
   id: string;
   title: string;
   description?: string;
   status: TaskStatus;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: TaskPriority;
   assignee?: string;
   createdAt: string;
   updatedAt: string;
