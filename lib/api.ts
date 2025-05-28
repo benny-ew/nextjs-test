@@ -1,4 +1,4 @@
-import { Task, TaskStatus, ApiTask, ApiTaskStatus, ApiResponse } from '@/types/task';
+import { Task, TaskStatus, ApiTask, ApiTaskStatus, ApiResponse, PaginationParams, PaginationInfo } from '@/types/task';
 import { getApiConfig, logConfiguration } from '@/lib/config';
 
 // Get configuration
@@ -47,8 +47,15 @@ const taskToApi = (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Omit<Api
 
 // API implementation
 export const taskApi = {
-  async getTasks(): Promise<Task[]> {
-    const response = await fetch(`${API_BASE_URL}/tasks`, {
+  async getTasks(pagination?: PaginationParams): Promise<{ tasks: Task[]; pagination: PaginationInfo }> {
+    const queryParams = new URLSearchParams();
+    if (pagination) {
+      queryParams.append('page', pagination.page.toString());
+      queryParams.append('limit', pagination.limit.toString());
+    }
+    
+    const url = `${API_BASE_URL}/tasks${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +67,18 @@ export const taskApi = {
     }
     
     const data: ApiResponse = await response.json();
-    return data.tasks.map(taskFromApi);
+    const tasks = data.tasks.map(taskFromApi);
+    
+    const paginationInfo: PaginationInfo = {
+      currentPage: data.page,
+      totalPages: Math.ceil(data.total / data.limit),
+      totalItems: data.total,
+      itemsPerPage: data.limit,
+      hasNextPage: data.page < Math.ceil(data.total / data.limit),
+      hasPreviousPage: data.page > 1,
+    };
+    
+    return { tasks, pagination: paginationInfo };
   },
 
   async updateTaskStatus(taskId: string, newStatus: TaskStatus): Promise<Task> {

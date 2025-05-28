@@ -10,6 +10,8 @@ interface ColumnProps {
   id: TaskStatus;
   title: string;
   tasks: Task[];
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 const statusColors = {
@@ -18,7 +20,7 @@ const statusColors = {
   DONE: 'bg-green-100 text-green-800 border-green-200',
 };
 
-export const Column = ({ id, title, tasks }: ColumnProps) => {
+export const Column = ({ id, title, tasks, onEditTask, onDeleteTask }: ColumnProps) => {
   return (
     <Card className="h-fit bg-white border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
       <CardHeader className="pb-4">
@@ -42,7 +44,13 @@ export const Column = ({ id, title, tasks }: ColumnProps) => {
               }`}
             >
               {tasks.map((task, index) => (
-                <TaskCard key={task.id} task={task} index={index} />
+                <TaskCard 
+                  key={task.id} 
+                  task={task} 
+                  index={index} 
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
+                />
               ))}
               {provided.placeholder}
               {tasks.length === 0 && !snapshot.isDraggingOver && (

@@ -22,6 +22,21 @@ export interface ApiResponse {
   limit: number;
 }
 
+// Pagination types
+export interface PaginationParams {
+  page: number;
+  limit: number;
+}
+
+export interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
