@@ -19,6 +19,7 @@ interface FormFieldProps {
   helpText?: string;
   showCharCount?: boolean;
   validIcon?: boolean;
+  icon?: React.ReactNode;
   // React Hook Form registration
   registration?: any;
 }
@@ -39,6 +40,7 @@ export function FormField({
   helpText,
   showCharCount = false,
   validIcon = false,
+  icon,
   registration,
 }: FormFieldProps) {
   const hasError = !!(error || fieldError);
@@ -53,6 +55,13 @@ export function FormField({
       </Label>
       
       <div className="relative">
+        {/* Leading Icon */}
+        {icon && (
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            {icon}
+          </div>
+        )}
+        
         <Input
           id={id}
           type={type}
@@ -60,6 +69,7 @@ export function FormField({
           disabled={disabled}
           maxLength={maxLength}
           className={`
+            ${icon ? 'pl-10' : ''}
             ${hasError && showValidation ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
             ${isValid && validIcon ? 'border-green-500 focus:border-green-500 focus:ring-green-500 pr-10' : ''}
           `}

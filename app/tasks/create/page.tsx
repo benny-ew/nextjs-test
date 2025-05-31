@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField, FormTextarea, FormSelect } from '@/components/ui/form-field';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
+import { AuthGuard } from '@/components/AuthGuard';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useTaskForm } from '@/hooks/use-task-form';
 
@@ -39,65 +40,56 @@ export default function CreateTaskPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="mb-6">
-          <Button 
-            variant="outline" 
-            onClick={handleBack}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Board
-          </Button>
-          
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Create New Task
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Add a new task to your board
-          </p>
-        </div>
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="mb-6">
+            <Button 
+              variant="outline" 
+              onClick={handleBack}
+              className="mb-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Board
+            </Button>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Task Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <ErrorMessage
-                message={error.message}
-                onRetry={() => {}}
-                variant="inline"
-                className="mb-4"
-              />
-            )}
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <FormField
-                id="title"
-                label="Task Title"
-                required
-                placeholder="Enter a descriptive task title"
-                maxLength={200}
-                showCharCount
-                validIcon
-                error={errors.title?.message}
-                fieldError={fieldErrors.title}
-                touched={touched.title}
-                value={titleValue}
-                helpText="Give your task a clear, concise title that describes what needs to be done"
-                registration={{
-                  ...registerWithValidation('title'),
-                  onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
-                    console.log(e);
-                    handleFieldBlur('title');
-                  }
-                }}
-              />
+          <Card className="bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-blue-600" />
+                Create New Task
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <div className="mb-6">
+                  <ErrorMessage message={error.message} />
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <FormField
+                  id="title"
+                  label="Title"
+                  required
+                  placeholder="Enter a descriptive task title"
+                  registration={{
+                    ...registerWithValidation('title'),
+                    onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+                      console.log(e);
+                      handleFieldBlur('title');
+                    }
+                  }}
+                  error={errors.title?.message}
+                  fieldError={fieldErrors.title}
+                  touched={touched.title}
+                  value={titleValue}
+                  maxLength={200}
+                  showCharCount
+                  validIcon
+                  helpText="Give your task a clear, concise title that describes what needs to be done"
+                />
 
               <FormTextarea
                 id="description"
@@ -162,5 +154,6 @@ export default function CreateTaskPage() {
         </Card>
       </div>
     </div>
+    </AuthGuard>
   );
 }

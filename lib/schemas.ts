@@ -1,6 +1,23 @@
 import { z } from 'zod';
 import { ApiTaskStatus } from '@/types/task';
 
+// Login form validation schema
+export const loginFormSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address')
+    .max(255, 'Email must be less than 255 characters'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters')
+    .max(100, 'Password must be less than 100 characters'),
+});
+
+// Type for login form data
+export type LoginFormData = z.infer<typeof loginFormSchema>;
+
 // Task form validation schema
 export const taskFormSchema = z.object({
   title: z
