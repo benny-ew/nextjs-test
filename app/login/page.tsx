@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -26,10 +26,11 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    router.push('/dashboard');
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const {
     register,
@@ -54,6 +55,8 @@ export default function LoginPage() {
         setLoginError('Invalid username or password');
         return;
       }
+      
+      // Redirect will happen via useEffect when isAuthenticated becomes true
     } catch (error) {
       setLoginError('An unexpected error occurred');
     } finally {
