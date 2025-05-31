@@ -39,21 +39,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      if (result?.ok) {
-        // Check if there's a stored redirect path
-        // const redirectPath =
-        //   typeof window !== "undefined"
-        //     ? sessionStorage.getItem("redirectAfterLogin")
-        //     : null;
-
-        // if (redirectPath) {
-        //   sessionStorage.removeItem("redirectAfterLogin");
-        //   router.push(redirectPath);
-        // } else {
-          router.push("/dashboard");
-        //}
-      }
-
+      // Don't redirect here - let the component handle it
+      // The redirect will happen via useEffect when session state changes
+      
       return result?.ok || false;
     } catch (error) {
       console.error("Login failed:", error);
