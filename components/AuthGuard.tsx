@@ -16,7 +16,11 @@ export function AuthGuard({ children }: AuthGuardProps) {
   useEffect(() => {
     if (status === "loading") return; // Still loading
 
-    if (!session) {
+    if (!session || !session.accessToken) {
+      // Store current path for redirect after login
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+      }
       router.push("/login");
       return;
     }
@@ -32,7 +36,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  if (!session) {
+  if (!session || !session.accessToken) {
     return null; // Will redirect to login
   }
 

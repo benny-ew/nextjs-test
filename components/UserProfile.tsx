@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { getUserInfoFromSession, getUserRolesFromSession } from '@/lib/authUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogOut, User, ChevronDown } from 'lucide-react';
@@ -9,11 +11,15 @@ import { LogOut, User, ChevronDown } from 'lucide-react';
 export function UserProfile() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
+  const { logout } = useAuth();
 
-  if (!session?.user) return null;
+  if (!session?.accessToken) return null;
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/login' });
+  const userInfo = getUserInfoFromSession(session);
+  const userRoles = getUserRolesFromSession(session);
+
+  const handleLogout = async () => {
+    await logout();
     setIsOpen(false);
   };
 
@@ -28,7 +34,7 @@ export function UserProfile() {
           <User className="h-3 w-3 text-blue-600" />
         </div>
         <span className="hidden sm:inline text-sm font-medium">
-          {session.user.name}
+          {userInfo.name || userInfo.username || 'User'}
         </span>
         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
@@ -49,8 +55,13 @@ export function UserProfile() {
                   <User className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{session.user.name}</p>
-                  <p className="text-sm text-gray-500">{session.user.email}</p>
+                  <p className="font-medium text-gray-900">{userInfo.name || userInfo.username || 'User'}</p>
+                  <p className="text-sm text-gray-500">{userInfo.email || 'No email'}</p>
+                  {userRoles.length > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Roles: {userRoles.join(', ')}
+                    </p>
+                  )}
                 </div>
               </div>
               

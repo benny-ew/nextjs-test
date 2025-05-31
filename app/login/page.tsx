@@ -4,20 +4,32 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { signIn, getSession } from 'next-auth/react';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
-import { loginFormSchema, LoginFormData } from '@/lib/schemas';
+import { loginFormSchema } from '@/lib/schemas';
 import { LogIn, User, Lock, Eye, EyeOff } from 'lucide-react';
+
+interface LoginFormData {
+  username: string;
+  password: string;
+}
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { login, isAuthenticated } = useAuth();
   const router = useRouter();
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    router.push('/dashboard');
+    return null;
+  }
 
   const {
     register,
@@ -26,7 +38,7 @@ export default function LoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: ''
     }
   });
@@ -36,21 +48,12 @@ export default function LoginPage() {
       setLoginError(null);
       setIsLoading(true);
       
-      const result = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
+      const success = await login(data.username, data.password);
 
-      if (result?.error) {
-        setLoginError('Invalid email or password');
+      if (!success) {
+        setLoginError('Invalid username or password');
         return;
       }
-
-      // Wait for session to be established
-      await getSession();
-      router.push('/');
-      router.refresh();
     } catch (error) {
       setLoginError('An unexpected error occurred');
     } finally {
@@ -85,12 +88,12 @@ export default function LoginPage() {
               )}
 
               <FormField
-                id="email"
-                label="Email"
-                type="email"
-                placeholder="Enter your email"
-                registration={register('email')}
-                error={errors.email?.message}
+                id="username"
+                label="Username"
+                type="text"
+                placeholder="Enter your username"
+                registration={register('username')}
+                error={errors.username?.message}
                 icon={<User className="h-4 w-4" />}
               />
 
@@ -140,10 +143,8 @@ export default function LoginPage() {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</h3>
               <div className="space-y-1 text-xs text-blue-700">
-                <div><strong>Admin:</strong> admin@example.com</div>
-                <div><strong>User:</strong> user@example.com</div>
-                <div><strong>Demo:</strong> demo@example.com</div>
-                <div className="mt-1"><em>Password: password123</em></div>
+                <div><strong>Username:</strong> demo</div>
+                <div><strong>Password:</strong> password123</div>
               </div>
             </div>
           </CardContent>

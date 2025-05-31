@@ -3,15 +3,14 @@ import { ApiTaskStatus } from '@/types/task';
 
 // Login form validation schema
 export const loginFormSchema = z.object({
-  email: z
+  username: z
     .string()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email address')
-    .max(255, 'Email must be less than 255 characters'),
+    .min(1, 'Username is required')
+    .max(255, 'Username must be less than 255 characters'),
   password: z
     .string()
     .min(1, 'Password is required')
-    .min(6, 'Password must be at least 6 characters')
+    .min(3, 'Password must be at least 3 characters')
     .max(100, 'Password must be less than 100 characters'),
 });
 
