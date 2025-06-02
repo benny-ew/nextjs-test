@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { AuthGuard } from '@/components/AuthGuard';
 import { UserProfile } from '@/components/UserProfile';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { getUserInfoFromSession, getUserRolesFromSession } from '@/lib/authUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,15 +18,18 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-600">Welcome back!</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+                <p className="text-gray-600 dark:text-gray-400">Welcome back!</p>
               </div>
-              <UserProfile />
+              <div className="flex items-center gap-4">
+                <ThemeToggle />
+                <UserProfile />
+              </div>
             </div>
           </div>
         </header>

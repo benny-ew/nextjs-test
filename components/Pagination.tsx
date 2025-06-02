@@ -64,7 +64,7 @@ export const Pagination = ({ pagination, onPageChange, loading = false }: Pagina
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Items info */}
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             Showing {startItem} to {endItem} of {totalItems} tasks
           </div>
 
@@ -96,7 +96,7 @@ export const Pagination = ({ pagination, onPageChange, loading = false }: Pagina
             <div className="flex items-center gap-1 mx-2">
               {pageNumbers.map((pageNum, index) => (
                 pageNum === -1 ? (
-                  <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+                  <span key={`ellipsis-${index}`} className="px-2 text-gray-400 dark:text-gray-500">
                     ...
                   </span>
                 ) : (

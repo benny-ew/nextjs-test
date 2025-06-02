@@ -163,17 +163,17 @@ export const KanbanBoard = () => {
       <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
             Task Board
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Drag and drop tasks to update their status
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button 
             onClick={handleCreateTask}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 dark:from-blue-500 dark:to-purple-500 dark:hover:from-blue-600 dark:hover:to-purple-600 text-white shadow-md hover:shadow-lg transition-all duration-200"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add New Task
@@ -213,10 +213,10 @@ export const KanbanBoard = () => {
         loading={isLoading}
       />
 
-      <div className="text-center text-sm text-gray-600">
+      <div className="text-center text-sm text-gray-600 dark:text-gray-400">
         <p>Total tasks: {pagination.totalItems} | Page {pagination.currentPage} of {pagination.totalPages}</p>
         <p className="mt-1">
-          API ready - Replace the mock data in <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">lib/api.ts</code> with your actual API endpoint
+          API ready - Replace the mock data in <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-xs dark:text-gray-300">lib/api.ts</code> with your actual API endpoint
         </p>
       </div>
 
